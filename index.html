@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Enterprise Expense Management System</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f4f7fc;
+}
+
+.dark-mode{
+background:#121212;
+color:#fff;
+}
+
+.dark-mode .card,
+.dark-mode table,
+.dark-mode .sidebar,
+.dark-mode .topbar,
+.dark-mode .stat-card{
+background:#1f1f1f;
+color:#fff;
+}
+
+.dark-mode input,
+.dark-mode textarea,
+.dark-mode select{
+background:#333;
+color:#fff;
+border:1px solid #555;
+}
+
+.login-page{
+width:100%;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.login-box{
+width:350px;
+background:#fff;
+padding:40px;
+border-radius:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+}
+
+.login-box h2{
+text-align:center;
+margin-bottom:20px;
+}
+
+.login-box input{
+width:100%;
+padding:12px;
+margin-bottom:15px;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+.login-box button{
+width:100%;
+padding:12px;
+border:none;
+background:#007bff;
+color:#fff;
+border-radius:5px;
+cursor:pointer;
+}
+
+.dashboard{
+display:none;
+}
+
+.layout{
+display:flex;
+min-height:100vh;
+}
+
+.sidebar{
+width:240px;
+background:#007bff;
+color:#fff;
+padding:20px;
+}
+
+.sidebar h2{
+margin-bottom:25px;
+}
+
+.sidebar button{
+width:100%;
+margin-bottom:10px;
+padding:12px;
+border:none;
+background:rgba(255,255,255,0.2);
+color:#fff;
+border-radius:5px;
+cursor:pointer;
+text-align:left;
+}
+
+.main{
+flex:1;
+}
+
+.topbar{
+background:#fff;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.topbar-buttons{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+.btn{
+padding:10px 15px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+color:#fff;
+}
+
+.export-btn{
+background:#6f42c1;
+}
+
+.print-btn{
+background:#17a2b8;
+}
+
+.dark-btn{
+background:#343a40;
+}
+
+.logout-btn{
+background:red;
+}
+
+.container{
+padding:20px;
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:15px;
+margin-bottom:20px;
+}
+
+.stat-card{
+background:#fff;
+padding:20px;
+border-radius:10px;
+text-align:center;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.card{
+background:#fff;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.form-group{
+margin-bottom:15px;
+}
+
+label{
+display:block;
+margin-bottom:5px;
+font-weight:bold;
+}
+
+input,
+textarea,
+select{
+width:100%;
+padding:10px;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+table th{
+background:#007bff;
+color:#fff;
+padding:12px;
+}
+
+table td{
+border:1px solid #ddd;
+padding:10px;
+text-align:center;
+}
+
+.pending{
+color:orange;
+font-weight:bold;
+}
+
+.approved{
+color:green;
+font-weight:bold;
+}
+
+.rejected{
+color:red;
+font-weight:bold;
+}
+
+.modified{
+color:blue;
+font-weight:bold;
+}
+
+.action-btn{
+padding:6px 10px;
+border:none;
+border-radius:4px;
+cursor:pointer;
+color:#fff;
+margin:2px;
+}
+
+.approve-btn{
+background:green;
+}
+
+.reject-btn{
+background:red;
+}
+
+.modify-btn{
+background:orange;
+}
+
+.search-box{
+margin-bottom:15px;
+}
+
+.hidden{
+display:none;
+}
+
+@media(max-width:768px){
+
+.layout{
+flex-direction:column;
+}
+
+.sidebar{
+width:100%;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div class="login-page" id="loginPage">
+
+<div class="login-box">
+
+<h2>Expense Portal Login</h2>
+
+<input type="text" id="username" placeholder="Username">
+
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<br><br>
+
+<p><b>Admin:</b> admin / admin123</p>
+
+<p><b>User:</b> user / user123</p>
+
+</div>
+
+</div>
+
+<!-- DASHBOARD -->
+
+<div class="dashboard" id="dashboard">
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+
+<div class="sidebar">
+
+<h2>Expense System KAURLI GROUP</h2>
+
+<button onclick="showSection('dashboardSection')">
+Dashboard
+</button>
+
+<button onclick="showSection('requestSection')">
+Expense Requests
+</button>
+
+<button onclick="showSection('budgetSection')" id="budgetMenu">
+Budget Allocation
+</button>
+
+<button onclick="showSection('reportSection')">
+Reports
+</button>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main">
+
+<div class="topbar">
+
+<h2 id="welcomeText">Welcome</h2>
+
+<div class="topbar-buttons">
+
+<button class="btn export-btn" onclick="exportExcel()">
+Excel
+</button>
+
+<button class="btn export-btn" onclick="exportPDF()">
+PDF
+</button>
+
+<button class="btn print-btn" onclick="window.print()">
+Print
+</button>
+
+<button class="btn dark-btn" onclick="toggleDarkMode()">
+Dark Mode
+</button>
+
+<button class="btn logout-btn" onclick="logout()">
+Logout
+</button>
+
+</div>
+
+</div>
+
+<div class="container">
+
+<!-- DASHBOARD -->
+
+<div id="dashboardSection">
+
+<div class="stats">
+
+<div class="stat-card">
+<h4>Total Requests</h4>
+<h2 id="totalRequests">0</h2>
+</div>
+
+<div class="stat-card">
+<h4>Approved</h4>
+<h2 id="approvedCount">0</h2>
+</div>
+
+<div class="stat-card">
+<h4>Rejected</h4>
+<h2 id="rejectedCount">0</h2>
+</div>
+
+<div class="stat-card">
+<h4>Pending</h4>
+<h2 id="pendingCount">0</h2>
+</div>
+
+</div>
+
+<div class="stats">
+
+<div class="stat-card">
+<h4>Total Budget</h4>
+<h2 id="totalBudget">0</h2>
+</div>
+
+<div class="stat-card">
+<h4>Total Expense</h4>
+<h2 id="totalExpense">0</h2>
+</div>
+
+<div class="stat-card">
+<h4>Available Balance</h4>
+<h2 id="availableBalance">0</h2>
+</div>
+
+</div>
+
+</div>
+
+<!-- REQUEST SECTION -->
+
+<div id="requestSection">
+
+<div class="card">
+
+<h3>Create Expense Request</h3>
+
+<div class="form-group">
+<label>Date</label>
+<input type="text" id="date" readonly>
+</div>
+
+<div class="form-group">
+<label>Request ID</label>
+<input type="text" id="requestId" readonly>
+</div>
+
+<div class="form-group">
+<label>Head of Account</label>
+
+<select id="head">
+<option>Travel</option>
+<option>Fuel</option>
+<option>Office Expense</option>
+<option>Maintenance</option>
+<option>Entertainment</option>
+</select>
+
+</div>
+
+<div class="form-group">
+<label>Expense Details</label>
+<textarea id="details"></textarea>
+</div>
+
+<div class="form-group">
+<label>Amount</label>
+<input type="number" id="amount">
+</div>
+
+<button class="btn export-btn" onclick="submitRequest()">
+Submit Request
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Expense Requests</h3>
+
+<div class="search-box">
+<input type="text"
+id="searchInput"
+placeholder="Search..."
+onkeyup="searchTable()">
+</div>
+
+<div style="overflow:auto;">
+
+<table id="requestTable">
+
+<thead>
+
+<tr>
+
+<th>Date</th>
+<th>Request ID</th>
+<th>Head</th>
+<th>Details</th>
+<th>Amount</th>
+<th>Status</th>
+<th>Workflow</th>
+<th>Signature</th>
+<th id="actionHeader">Actions</th>
+
+</tr>
+
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- BUDGET SECTION -->
+
+<div id="budgetSection" class="hidden">
+
+<div class="card">
+
+<h3>Budget Allocation</h3>
+
+<div class="form-group">
+<label>Head</label>
+
+<select id="budgetHead">
+<option>Travel</option>
+<option>Fuel</option>
+<option>Office Expense</option>
+<option>Maintenance</option>
+<option>Entertainment</option>
+</select>
+
+</div>
+
+<div class="form-group">
+<label>Budget Amount</label>
+<input type="number" id="budgetAmount">
+</div>
+
+<button class="btn export-btn" onclick="saveBudget()">
+Save Budget
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>Budget Summary</h3>
+
+<table id="budgetTable">
+
+<thead>
+
+<tr>
+<th>Head</th>
+<th>Budget</th>
+<th>Expense</th>
+<th>Available</th>
+</tr>
+
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- REPORT SECTION -->
+
+<div id="reportSection" class="hidden">
+
+<div class="card">
+
+<h3>System Reports</h3>
+
+<p>✔ Expense Reports</p>
+<p>✔ Budget Reports</p>
+<p>✔ Approval Reports</p>
+<p>✔ User History</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let currentRole = "";
+
+let requests =
+JSON.parse(localStorage.getItem("requests")) || [];
+
+let budgets =
+JSON.parse(localStorage.getItem("budgets")) || [];
+
+document.getElementById("date").value =
+new Date().toLocaleDateString();
+
+generateRequestId();
+
+function generateRequestId(){
+
+document.getElementById("requestId").value =
+"REQ-" + Math.floor(Math.random()*100000);
+
+}
+
+function login(){
+
+let username =
+document.getElementById("username").value;
+
+let password =
+document.getElementById("password").value;
+
+if(username==="admin" && password==="admin123"){
+
+currentRole="admin";
+
+startSystem();
+
+}
+
+else if(username==="user" && password==="user123"){
+
+currentRole="user";
+
+startSystem();
+
+}
+
+else{
+
+alert("Invalid Login");
+
+}
+
+}
+
+function startSystem(){
+
+document.getElementById("loginPage").style.display="none";
+
+document.getElementById("dashboard").style.display="block";
+
+document.getElementById("welcomeText").innerHTML =
+"Welcome " + currentRole.toUpperCase();
+
+if(currentRole==="user"){
+
+document.getElementById("budgetMenu").style.display="none";
+
+document.getElementById("actionHeader").style.display="none";
+
+}
+
+renderRequests();
+
+renderBudgets();
+
+updateStats();
+
+}
+
+function logout(){
+
+location.reload();
+
+}
+
+function showSection(sectionId){
+
+document.getElementById("dashboardSection").classList.add("hidden");
+document.getElementById("requestSection").classList.add("hidden");
+document.getElementById("budgetSection").classList.add("hidden");
+document.getElementById("reportSection").classList.add("hidden");
+
+document.getElementById(sectionId).classList.remove("hidden");
+
+}
+
+function submitRequest(){
+
+let data = {
+
+date: document.getElementById("date").value,
+
+requestId: document.getElementById("requestId").value,
+
+head: document.getElementById("head").value,
+
+details: document.getElementById("details").value,
+
+amount: parseFloat(document.getElementById("amount").value),
+
+status: "Pending",
+
+workflow: "Level 1",
+
+signature: "Pending"
+
+};
+
+if(data.details==="" || !data.amount){
+
+alert("Fill all fields");
+
+return;
+
+}
+
+requests.unshift(data);
+
+saveRequests();
+
+renderRequests();
+
+updateStats();
+
+document.getElementById("details").value="";
+document.getElementById("amount").value="";
+
+generateRequestId();
+
+}
+
+function renderRequests(){
+
+let tbody =
+document.querySelector("#requestTable tbody");
+
+tbody.innerHTML="";
+
+requests.forEach((r,index)=>{
+
+let row = `
+
+<tr>
+
+<td>${r.date}</td>
+<td>${r.requestId}</td>
+<td>${r.head}</td>
+<td>${r.details}</td>
+<td>${r.amount}</td>
+
+<td class="${
+r.status==="Approved" ? "approved" :
+r.status==="Rejected" ? "rejected" :
+r.status==="Modified" ? "modified" :
+"pending"
+}">
+${r.status}
+</td>
+
+<td>${r.workflow}</td>
+
+<td>${r.signature}</td>
+
+<td ${
+currentRole==="user" ?
+'style="display:none"' : ""
+}>
+
+<button class="action-btn approve-btn"
+onclick="approveRequest(${index})">
+Approve
+</button>
+
+<button class="action-btn reject-btn"
+onclick="rejectRequest(${index})">
+Reject
+</button>
+
+<button class="action-btn modify-btn"
+onclick="modifyRequest(${index})">
+Modify
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+tbody.innerHTML += row;
+
+});
+
+}
+
+function approveRequest(index){
+
+requests[index].status="Approved";
+requests[index].workflow="Completed";
+requests[index].signature="Director Signed";
+
+saveRequests();
+
+renderRequests();
+
+updateStats();
+
+}
+
+function rejectRequest(index){
+
+let reason = prompt("Enter Rejection Reason");
+
+if(!reason) return;
+
+requests[index].status =
+"Rejected - " + reason;
+
+saveRequests();
+
+renderRequests();
+
+updateStats();
+
+}
+
+function modifyRequest(index){
+
+let amount =
+prompt("Enter New Amount",
+requests[index].amount);
+
+if(!amount) return;
+
+requests[index].amount=parseFloat(amount);
+
+requests[index].status="Modified";
+
+saveRequests();
+
+renderRequests();
+
+updateStats();
+
+}
+
+function saveRequests(){
+
+localStorage.setItem(
+"requests",
+JSON.stringify(requests)
+);
+
+}
+
+function saveBudget(){
+
+let head =
+document.getElementById("budgetHead").value;
+
+let amount =
+parseFloat(document.getElementById("budgetAmount").value);
+
+if(!amount){
+
+alert("Enter amount");
+
+return;
+
+}
+
+let existing =
+budgets.find(b=>b.head===head);
+
+if(existing){
+
+existing.amount=amount;
+
+}
+
+else{
+
+budgets.push({
+head:head,
+amount:amount
+});
+
+}
+
+localStorage.setItem(
+"budgets",
+JSON.stringify(budgets)
+);
+
+renderBudgets();
+
+updateStats();
+
+}
+
+function renderBudgets(){
+
+let tbody =
+document.querySelector("#budgetTable tbody");
+
+tbody.innerHTML="";
+
+budgets.forEach(b=>{
+
+let expense = 0;
+
+requests.forEach(r=>{
+
+if(
+r.head===b.head &&
+r.status.includes("Approved")
+){
+
+expense += r.amount;
+
+}
+
+});
+
+let available =
+b.amount - expense;
+
+tbody.innerHTML += `
+
+<tr>
+
+<td>${b.head}</td>
+<td>${b.amount}</td>
+<td>${expense}</td>
+<td>${available}</td>
+
+</tr>
+
+`;
+
+});
+
+}
+
+function updateStats(){
+
+document.getElementById("totalRequests")
+.innerHTML = requests.length;
+
+let approved =
+requests.filter(r=>
+r.status.includes("Approved")
+);
+
+let rejected =
+requests.filter(r=>
+r.status.includes("Rejected")
+);
+
+let pending =
+requests.filter(r=>
+r.status==="Pending"
+);
+
+document.getElementById("approvedCount")
+.innerHTML = approved.length;
+
+document.getElementById("rejectedCount")
+.innerHTML = rejected.length;
+
+document.getElementById("pendingCount")
+.innerHTML = pending.length;
+
+let totalBudget =
+budgets.reduce((a,b)=>a+b.amount,0);
+
+let totalExpense =
+approved.reduce((a,b)=>a+b.amount,0);
+
+document.getElementById("totalBudget")
+.innerHTML = totalBudget.toFixed(2);
+
+document.getElementById("totalExpense")
+.innerHTML = totalExpense.toFixed(2);
+
+document.getElementById("availableBalance")
+.innerHTML =
+(totalBudget-totalExpense).toFixed(2);
+
+}
+
+function searchTable(){
+
+let value =
+document.getElementById("searchInput")
+.value.toLowerCase();
+
+let rows =
+document.querySelectorAll("#requestTable tbody tr");
+
+rows.forEach(row=>{
+
+row.style.display =
+row.innerText.toLowerCase()
+.includes(value)
+? ""
+: "none";
+
+});
+
+}
+
+function exportExcel(){
+
+let wb = XLSX.utils.book_new();
+
+let ws1 =
+XLSX.utils.json_to_sheet(requests);
+
+let ws2 =
+XLSX.utils.json_to_sheet(budgets);
+
+XLSX.utils.book_append_sheet(
+wb,ws1,"Requests"
+);
+
+XLSX.utils.book_append_sheet(
+wb,ws2,"Budgets"
+);
+
+XLSX.writeFile(
+wb,
+"Expense_System.xlsx"
+);
+
+}
+
+function exportPDF(){
+
+const { jsPDF } = window.jspdf;
+
+let doc =
+new jsPDF("landscape");
+
+let body=[];
+
+requests.forEach(r=>{
+
+body.push([
+
+r.date,
+r.requestId,
+r.head,
+r.details,
+r.amount,
+r.status,
+r.workflow,
+r.signature
+
+]);
+
+});
+
+doc.autoTable({
+
+head:[[
+"Date",
+"Request ID",
+"Head",
+"Details",
+"Amount",
+"Status",
+"Workflow",
+"Signature"
+]],
+
+body:body
+
+});
+
+doc.save("Expense_Report.pdf");
+
+}
+
+function toggleDarkMode(){
+
+document.body.classList.toggle("dark-mode");
+
+}
+
+</script>
+
+</body>
+</html>
+<!-- UPGRADED PROFESSIONAL submitRequest() FUNCTION -->
+
+<script>
+
+function submitRequest(){
+
+/* GET VALUES */
+
+let date =
+document.getElementById("date").value;
+
+let requestId =
+document.getElementById("requestId").value;
+
+let head =
+document.getElementById("head").value;
+
+let details =
+document.getElementById("details").value.trim();
+
+let amount =
+parseFloat(
+document.getElementById("amount").value
+);
+
+/* VALIDATION */
+
+if(details === ""){
+
+alert("Expense details are required");
+
+return;
+
+}
+
+if(isNaN(amount) || amount <= 0){
+
+alert("Enter valid amount");
+
+return;
+
+}
+
+/* FIND BUDGET */
+
+let budgetRecord =
+budgets.find(b => b.head === head);
+
+/* NO BUDGET */
+
+if(!budgetRecord){
+
+alert(
+"No budget allocated for selected account head"
+);
+
+return;
+
+}
+
+/* APPROVED EXPENSE CALCULATION */
+
+let approvedExpense = 0;
+
+requests.forEach(r=>{
+
+if(
+r.head === head &&
+r.status.includes("Approved")
+){
+
+approvedExpense += parseFloat(r.amount);
+
+}
+
+});
+
+/* AVAILABLE FUND */
+
+let availableBalance =
+budgetRecord.amount - approvedExpense;
+
+/* LOW FUND CHECK */
+
+if(amount > availableBalance){
+
+alert(
+"Request can't be processed due to low availability of fund"
+);
+
+return;
+
+}
+
+/* DUPLICATE CHECK */
+
+let duplicate =
+requests.find(r =>
+
+r.head === head &&
+r.details.toLowerCase() ===
+details.toLowerCase() &&
+r.amount === amount &&
+r.status === "Pending"
+
+);
+
+if(duplicate){
+
+alert(
+"Duplicate pending request already exists"
+);
+
+return;
+
+}
+
+/* CREATE REQUEST */
+
+let data = {
+
+date: date,
+
+requestId: requestId,
+
+head: head,
+
+details: details,
+
+amount: amount,
+
+status: "Pending",
+
+workflow: "Level 1 Approval Pending",
+
+signature: "Pending",
+
+createdBy: currentRole,
+
+createdAt:
+new Date().toLocaleString()
+
+};
+
+/* SAVE */
+
+requests.unshift(data);
+
+saveRequests();
+
+/* REFRESH */
+
+renderRequests();
+
+renderBudgets();
+
+updateStats();
+
+/* CLEAR FORM */
+
+document.getElementById("details").value = "";
+
+document.getElementById("amount").value = "";
+
+/* NEW REQUEST ID */
+
+generateRequestId();
+
+/* SUCCESS */
+
+alert(
+"Expense request submitted successfully"
+);
+
+}
+
+</script>
